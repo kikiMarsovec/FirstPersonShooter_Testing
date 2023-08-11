@@ -30,15 +30,12 @@ public class PlayerMovement : MonoBehaviour {
 	bool shiftDown = false;
 	float currentSpeed;
 	float currentVelocity;
-	float currentPositionVelocity;
 	bool crouching = false;
 	bool crouchSmoothing = false;
 	Vector3 currentHeight = Vector3.one;
 	Vector3 standingHeight = Vector3.one;
 	Vector3 crouchingHeight = new Vector3(1f, 0.5f, 1f);
 	Vector3 crouchingVelocity;
-	float currentPositionY;
-	float standingPositionY;
 
 	void Start() {
         controller = GetComponent<CharacterController>();
@@ -52,9 +49,11 @@ public class PlayerMovement : MonoBehaviour {
 		if (isGrounded && velocity.y < 0)
 			velocity.y = -2f;
 
-		// TODO CROUCHING
-		// zmanjsa se walkingSpeed in RunningSpeed
-		// ne moremo skakati
+		// TODO CROUCHING:
+		// zmanjsa se walkingSpeed in RunningSpeed (ali pa sploh nimamo vec opcije RunningSpeed, odloci se kako zelis)
+		// ne moremo skakati (oz ce skocimo ubistvu uncrouchamo)
+		// ce uncrouchamo in se zadanemo v nek objekt (nad nami) potem gremo avtomatsko nazaj v crouch
+		// Pri uncrouchanju dobimo nekaksen "Jitter", ne vem kako razresit 
 
 		//  crouch  smoothing
 		if (crouchSmoothing) {
@@ -65,18 +64,11 @@ public class PlayerMovement : MonoBehaviour {
 				}
 			} else { // standing up
 				currentHeight = Vector3.SmoothDamp(currentHeight, standingHeight, ref crouchingVelocity, smoothCrouchingSpeed);
-				currentPositionY = Mathf.SmoothDamp(currentPositionY, standingPositionY, ref currentPositionVelocity, smoothCrouchingSpeed - 0.1f);
-
-				Vector3 tempPosition = transform.position;
-				tempPosition.y = currentPositionY;
-				transform.position = tempPosition;
-
 				if (currentHeight == standingHeight) {
 					crouchSmoothing = false;
 				}
 			}
 			transform.localScale = currentHeight;
-			Debug.Log(currentHeight);
 		}
 
 		// walk-run transitions smoothing
@@ -122,6 +114,8 @@ public class PlayerMovement : MonoBehaviour {
 		if (isGrounded) {
 			velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity); // skocimo
 		}
+
+		// TODO pri skakanju se moramo, ce se zabijemo v strop, odbiti nazaj dol 
 	}
 
 	public void StartRunning() {
@@ -137,8 +131,6 @@ public class PlayerMovement : MonoBehaviour {
 	public void ToggleCrouch() {
 		crouching = !crouching;
 		crouchSmoothing = true;
-		currentPositionY = transform.position.y;
-		standingPositionY = currentPositionY + 0.5f;
 		/*
 		if (crouching) {
 			transform.localScale = new Vector3(1f, 0.5f, 1f);
