@@ -18,10 +18,13 @@ public class PlayerMovement : MonoBehaviour {
 	public float smoothCrouchingSpeed = 0.2f;
 
 	public Transform groundCheck;
-    public float groundDistance = 0.4f;
+    public float groundDistance = 0.2f;
     public LayerMask groundMask;
 
-    Vector3 velocity;
+	public Transform headCheck;
+	public float headDistance = 0.1f;
+
+	Vector3 velocity;
     bool isGrounded;
 	Vector2 currentInputVector;
 	Vector2 smoothInputVelocity;
@@ -37,6 +40,8 @@ public class PlayerMovement : MonoBehaviour {
 	Vector3 crouchingHeight = new Vector3(1f, 0.5f, 1f);
 	Vector3 crouchingVelocity;
 
+	bool jumpHit = false;
+
 	void Start() {
         controller = GetComponent<CharacterController>();
 		speed = walkingSpeed;
@@ -49,22 +54,36 @@ public class PlayerMovement : MonoBehaviour {
 		if (isGrounded && velocity.y < 0)
 			velocity.y = -2f;
 
-		// TODO CROUCHING:
-		// zmanjsa se walkingSpeed in RunningSpeed (ali pa sploh nimamo vec opcije RunningSpeed, odloci se kako zelis)
-		// ne moremo skakati (oz ce skocimo ubistvu uncrouchamo)
-		// ce uncrouchamo in se zadanemo v nek objekt (nad nami) potem gremo avtomatsko nazaj v crouch
-		// Pri uncrouchanju dobimo nekaksen "Jitter", ne vem kako razresit 
+		// preverimo ce skace in se ravno zabije v strop z glavo
+		if (!isGrounded && !jumpHit && Physics.CheckSphere(headCheck.position, headDistance, groundMask)) {
+			velocity.y = -1 * (velocity.y * 0.2f);
+			jumpHit = true;
+		} else if (isGrounded) {
+			jumpHit = false;
+		}
 
 		//  crouch  smoothing
 		if (crouchSmoothing) {
+			Debug.Log(Time.time);
 			if (crouching) {  // crouching
 				currentHeight = Vector3.SmoothDamp(currentHeight, crouchingHeight, ref crouchingVelocity, smoothCrouchingSpeed);
-				if (currentHeight == crouchingHeight) {
+				if (Vector2.Distance(currentHeight,crouchingHeight) <= 0.01f) {
+					currentHeight = crouchingHeight;
 					crouchSmoothing = false;
 				}
 			} else { // standing up
+				// preverimo ce  se  v strop zaletimo z glavo  (ce se, gremo nazaj v crouch)
+				if (Physics.CheckSphere(headCheck.position, headDistance, groundMask)) {
+					Crouch();
+				}
+
+				// razresimo jitter ko ustajamo
+				if (input.y == 0)
+					input.y = 0.1f;
+
 				currentHeight = Vector3.SmoothDamp(currentHeight, standingHeight, ref crouchingVelocity, smoothCrouchingSpeed);
-				if (currentHeight == standingHeight) {
+				if (Vector2.Distance(currentHeight, standingHeight) <= 0.01f) {
+					currentHeight = standingHeight;
 					crouchSmoothing = false;
 				}
 			}
@@ -112,10 +131,11 @@ public class PlayerMovement : MonoBehaviour {
         // preverimo ali je player na tleh
 		isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 		if (isGrounded) {
-			velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity); // skocimo
+			if (crouching)
+				StandUp(); // ce smo crouchani, vstanemo
+			else
+				velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity); // skocimo
 		}
-
-		// TODO pri skakanju se moramo, ce se zabijemo v strop, odbiti nazaj dol 
 	}
 
 	public void StartRunning() {
@@ -129,14 +149,28 @@ public class PlayerMovement : MonoBehaviour {
 	}
 
 	public void ToggleCrouch() {
-		crouching = !crouching;
+		isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+		if (!isGrounded)
+			return;
+		if (crouching)
+			StandUp();
+		else
+			Crouch();
+	}
+
+	private void Crouch() {
+		crouching = true;
 		crouchSmoothing = true;
-		/*
-		if (crouching) {
-			transform.localScale = new Vector3(1f, 0.5f, 1f);
-		} else {
-			transform.localScale = new Vector3(1f, 1f, 1f);
-		}
-		*/
+		walkingSpeed /= 2;
+		runningSpeed/= 2;
+		speed = walkingSpeed;
+	}
+
+	private void StandUp() {
+		crouching = false;
+		crouchSmoothing = true;
+		walkingSpeed *= 2;
+		runningSpeed *= 2;
+		speed = walkingSpeed;
 	}
 }

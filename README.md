@@ -10,11 +10,12 @@
  - s tipko C (toggle) pocepnemo
 
 TODO:
-- implementiraj pocepanje
-- implementiraj tek (DONE: tudi smoothamo transicije med hojo in tekom ter obratno)
-- gledanje naokoli z misko  mora biti smooth (DONE: Dosezeno  s SmoothDamp)
-- WASD premikanje more biti smooth (DONE:  Dosezeno  s SmoothDamp)
 - v inputSystem dodaj se kontrole za igralni ploscek
 
 
 ## Shooting
+
+## Other
+
+TODO:
+- izklopi senco playerja
