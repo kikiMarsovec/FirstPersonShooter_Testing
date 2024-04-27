@@ -12,11 +12,14 @@ public class InputManager : MonoBehaviour {
 
     private PlayerMovement playerMovement;
     private MouseLook mouseLook;
+    private Gun gun;
 
     void Awake() {
         playerInput = new PlayerInput();
         playerActions = playerInput.Player;
 
+        // gun controlls
+        gun = gameObject.transform.GetChild(0).GetComponentInChildren<Gun>(); // we get main camera and then search its children for the Gun script
         // move player
         playerMovement = GetComponent<PlayerMovement>();
         // look around 
@@ -28,6 +31,8 @@ public class InputManager : MonoBehaviour {
         playerActions.Run.canceled += ctx => playerMovement.EndRunning();
         // toggle crouch
         playerActions.Crouch.performed += ctx => playerMovement.ToggleCrouch();
+        // fire gun
+        playerActions.Shoot.performed += ctx => gun.Shoot();
     }
 
 	private void Update() {

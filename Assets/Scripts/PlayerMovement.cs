@@ -35,10 +35,10 @@ public class PlayerMovement : MonoBehaviour {
 	float currentVelocity;
 	bool crouching = false;
 	bool crouchSmoothing = false;
-	Vector3 currentHeight = Vector3.one;
-	Vector3 standingHeight = Vector3.one;
-	Vector3 crouchingHeight = new Vector3(1f, 0.5f, 1f);
-	Vector3 crouchingVelocity;
+	float currentHeight = 1.7f;
+	float standingHeight = 1.7f;
+	float crouchingHeight = 1.01f;
+	float crouchingVelocity;
 
 	bool jumpHit = false;
 
@@ -66,8 +66,8 @@ public class PlayerMovement : MonoBehaviour {
 		if (crouchSmoothing) {
 			Debug.Log(Time.time);
 			if (crouching) {  // crouching
-				currentHeight = Vector3.SmoothDamp(currentHeight, crouchingHeight, ref crouchingVelocity, smoothCrouchingSpeed);
-				if (Vector2.Distance(currentHeight,crouchingHeight) <= 0.01f) {
+				currentHeight = Mathf.SmoothDamp(currentHeight, crouchingHeight, ref crouchingVelocity, smoothCrouchingSpeed);
+				if (currentHeight <= crouchingHeight + 0.01f) {
 					currentHeight = crouchingHeight;
 					crouchSmoothing = false;
 				}
@@ -81,13 +81,14 @@ public class PlayerMovement : MonoBehaviour {
 				if (input.y == 0)
 					input.y = 0.1f;
 
-				currentHeight = Vector3.SmoothDamp(currentHeight, standingHeight, ref crouchingVelocity, smoothCrouchingSpeed);
-				if (Vector2.Distance(currentHeight, standingHeight) <= 0.01f) {
+				currentHeight = Mathf.SmoothDamp(currentHeight, standingHeight, ref crouchingVelocity, smoothCrouchingSpeed);
+				if (currentHeight >= standingHeight - 0.01f) {
 					currentHeight = standingHeight;
 					crouchSmoothing = false;
 				}
 			}
-			transform.localScale = currentHeight;
+			//transform.localScale = currentHeight;
+			controller.height = currentHeight;
 		}
 
 		// walk-run transitions smoothing
